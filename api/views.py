@@ -31,7 +31,7 @@ def chat(request):
                 "Content-Type": "application/json"
             },
             json={
-                "model": "meta-llama/llama-4-maverick:free",
+                "model": "meta-llama/llama-3.3-70b-instruct:free",
                 "messages": messages
             },
             timeout=30
@@ -43,7 +43,7 @@ def chat(request):
         
         return Response({
             "response": result['choices'][0]['message']['content'],
-            "model_used": "Llama 4 Maverick"
+            "model_used": "Llama 3.3 70B"
         })
 
         return Response({
