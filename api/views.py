@@ -9,10 +9,10 @@ load_dotenv()
 models = [
     "meta-llama/llama-3.2-3b-instruct:free",
     "meta-llama/llama-3.3-70b-instruct:free",
-    "inclusionai/ring-2.6-1t:free",
-    "baidu/cobuddy:free",
     "google/gemma-4-26b-a4b-it:free",
     "openai/gpt-oss-120b:free"
+    "inclusionai/ring-2.6-1t:free",
+    "baidu/cobuddy:free",
 ]
 
 ERROR_MSG = "Sorry, I couldn't reach the server. Make sure the backend is running."
