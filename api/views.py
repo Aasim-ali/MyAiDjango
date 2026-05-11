@@ -1,5 +1,6 @@
 import httpx
 import os
+import time
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from dotenv import load_dotenv
@@ -7,10 +8,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 models = [
-    "openai/gpt-oss-120b:free",
     "meta-llama/llama-3.2-3b-instruct:free",
     "meta-llama/llama-3.3-70b-instruct:free",
     "google/gemma-4-26b-a4b-it:free",
+    "openai/gpt-oss-120b:free",
     "inclusionai/ring-2.6-1t:free",
     "baidu/cobuddy:free",
 ]
@@ -29,10 +30,26 @@ def chat(request):
             continue
         role = "assistant" if msg['role'] == 'model' else "user"
         messages.append({"role": role, "content": msg['content']})
-    
+
     messages.append({"role": "user", "content": message})
 
+    start_time = time.time()
+
     for model in models:
+        elapsed = time.time() - start_time
+        remaining = 22 - elapsed
+
+        if remaining < 3:
+            print(f"Time limit reached ({elapsed:.1f}s elapsed), stopping failover.")
+            break
+
+        per_model_timeout = httpx.Timeout(
+            connect=2.0,
+            read=min(8.0, remaining - 1),
+            write=2.0,
+            pool=2.0
+        )
+
         try:
             response = httpx.post(
                 "https://openrouter.ai/api/v1/chat/completions",
@@ -41,10 +58,9 @@ def chat(request):
                     "Content-Type": "application/json"
                 },
                 json={"model": model, "messages": messages},
-                timeout=8.0  # Reduced from 30 to prevent Gunicorn worker timeout
+                timeout=per_model_timeout
             )
-            
-            # Handle non-200 responses gracefully
+
             if response.status_code != 200:
                 print(f"{model} returned status {response.status_code}")
                 try:
@@ -52,28 +68,31 @@ def chat(request):
                     if 'error' in err_data:
                         print(f"{model} error details:", err_data['error'])
                 except Exception:
-                    print(f"{model} failed to parse error JSON")
+                    pass
                 continue
 
             result = response.json()
 
             if 'error' in result:
                 print(f"{model} error:", result['error'])
-                continue  # Try next model
+                continue
 
             return Response({
                 "response": result['choices'][0]['message']['content'],
                 "model_used": model
             })
-            
+
         except httpx.TimeoutException:
-            print(f"{model} timed out")
+            print(f"{model} timed out after {time.time() - start_time:.1f}s total")
             continue
         except httpx.RequestError as e:
-            print(f"{model} request error:", str(e))
+            print(f"{model} request error: {e}")
             continue
         except Exception as e:
-            print(f"{model} unexpected error:", str(e))
+            print(f"{model} unexpected error: {e}")
             continue
 
-    return Response({"error": "All models are busy. Please try again."}, status=503)
+    return Response(
+        {"error": "All models are busy. Please try again."},
+        status=503
+    )
