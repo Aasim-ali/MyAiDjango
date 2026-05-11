@@ -8,13 +8,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"), http_options={'api_version': 'v1beta'})
 
-MODELS = [
-    "gemini-2.0-flash",           # Latest + fastest
-    "gemini-1.5-flash",           # Fast fallback  
-    "gemini-1.5-flash-8b",        # Lightest fallback — 1.5-pro ki jagah
-]
+# MODELS = [
+#     "gemini-2.0-flash",    # Do not include the 'models/' prefix
+#     "gemini-2.5-flash",
+#     "gemini-1.5-flash-8b",
+# ]
+
 
 ERROR_MSG = "Sorry, I couldn't reach the server. Make sure the backend is running."
 
@@ -45,21 +46,36 @@ def chat(request):
             cleaned.append(c)
 
     last_error = None
-    for model_name in MODELS:
-        try:
-            response = client.models.generate_content(
-                model=model_name,
-                contents=cleaned,
-            )
-            return Response({"response": response.text, "model_used": model_name})
-        except Exception as e:
-            error_str = str(e).lower()
-            print(error_str)
-            if any(k in error_str for k in ["quota", "rate limit", "429", "resource_exhausted"]):
-                last_error = e
-                continue
-            import traceback
-            traceback.print_exc()
-            return Response({"error": str(e)}, status=500)
+    # for model_name in MODELS:
+    #     try:
+    #         response = client.models.generate_content(
+    #             model=model_name,
+    #             contents=cleaned,
+    #         )
+    #         return Response({"response": response.text, "model_used": model_name})
+    #     except Exception as e:
+    #         error_str = str(e).lower()
+    #         print(error_str)
+    #         if any(k in error_str for k in ["quota", "rate limit", "429", "resource_exhausted"]):
+    #             last_error = e
+    #             continue
+    #         import traceback
+    #         traceback.print_exc()
+    #         return Response({"error": str(e)}, status=500)
 
-    return Response({"error": f"All models rate limited. Last error: {str(last_error)}"}, status=429)
+    # return Response({"error": f"All models rate limited. Last error: {str(last_error)}"}, status=429)
+
+    model_name = "gemini-2.5-flash"
+    try:
+        response = client.models.generate_content(
+            model=model_name,
+            contents=cleaned,
+        )
+        return Response({"response": response.text, "model_used": model_name})
+    except Exception as e:
+        error_str = str(e).lower()
+        print(error_str)
+        if any(k in error_str for k in ["quota", "rate limit", "429", "resource_exhausted"]):
+            return Response({"error": "Rate limit exceeded. Please try again later."})
+        else:
+            return Response({"error": "Internal server error."})
