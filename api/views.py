@@ -54,7 +54,8 @@ def chat(request):
             return Response({"response": response.text, "model_used": model_name})
         except Exception as e:
             error_str = str(e).lower()
-            if any(k in error_str for k in ["quota", "rate", "429", "resource_exhausted"]):
+            print(error_str)
+            if any(k in error_str for k in ["quota", "rate limit", "429", "resource_exhausted"]):
                 last_error = e
                 continue
             import traceback
