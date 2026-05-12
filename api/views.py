@@ -21,18 +21,25 @@ logger = logging.getLogger(__name__)
 # Add/remove freely — failover handles the rest.
 
 MODELS = [
-    # Fast & small — best for short replies, low latency
-    {"id": "meta-llama/llama-3.2-3b-instruct:free",  "tier": "fast",   "ctx": 131072},
-    {"id": "google/gemma-3-4b-it:free",               "tier": "fast",   "ctx": 131072},
+    # ────── Default (fallback) ──────────────────────────────
+    {"id": "openrouter/free", "tier": "fast", "ctx": 131072},
+    
+    # ── Fast / lightweight ──────────────────────────────────────────
+    {"id": "openai/gpt-oss-20b:free",                        "tier": "fast",  "ctx": 131072},
+    {"id": "nvidia/nemotron-3-nano-30b-a3b:free",            "tier": "fast",  "ctx": 256000},
+    {"id": "baidu/cobuddy:free",                             "tier": "fast",  "ctx": 131072},
+    {"id": "google/gemma-4-26b-a4b-it:free",                 "tier": "fast",  "ctx": 262144},
 
-    # Mid — good quality, acceptable speed
-    {"id": "meta-llama/llama-3.3-70b-instruct:free",  "tier": "mid",    "ctx": 131072},
-    {"id": "google/gemma-4-27b-it:free",              "tier": "mid",    "ctx": 131072},
-    {"id": "mistralai/mistral-7b-instruct:free",      "tier": "mid",    "ctx": 32768},
+    # ── Mid quality ─────────────────────────────────────────────────
+    {"id": "google/gemma-4-31b-it:free",                     "tier": "mid",   "ctx": 262144},
+    {"id": "z-ai/glm-4.5-air:free",                          "tier": "mid",   "ctx": 131072},
+    {"id": "nvidia/nemotron-nano-9b-v2:free",                 "tier": "mid",   "ctx": 128000},
 
-    # Heavy — slow but highest quality, last resort
-    {"id": "deepseek/deepseek-r1:free",               "tier": "heavy",  "ctx": 163840},
-    {"id": "deepseek/deepseek-chat-v3-0324:free",     "tier": "heavy",  "ctx": 163840},
+    # ── Heavy / best quality ────────────────────────────────────────
+    {"id": "openai/gpt-oss-120b:free",                       "tier": "heavy", "ctx": 131072},
+    {"id": "nvidia/nemotron-3-super-120b-a12b:free",         "tier": "heavy", "ctx": 262144},
+    {"id": "inclusionai/ring-2.6-1t:free",                   "tier": "heavy", "ctx": 262144},
+    {"id": "minimax/minimax-m2.5:free",                      "tier": "heavy", "ctx": 196608},
 ]
 
 # ─── Simple In-Process Stats (resets on server restart) ───────────────────────
